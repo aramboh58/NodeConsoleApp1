@@ -63,15 +63,29 @@ function FindAllSinksFromSource(filePath) {
         // use readFileSync for our text file read rather than readFile which runs asynchronously.
         //
         const inputD = fs.readFileSync((filePath + 'coding_qual_input.txt'), { encoding: 'utf8', flag: 'r' });
-        console.log(inputD.toString());
+        //console.log(inputD.toString());
 
         // Test the 'splitLines' function with a multiline string.
-        console.log('Original string:');
-        console.log(inputD);
-        console.log(splitLines(inputD));
+        //console.log('Original string:');
+        //console.log(inputD);
+        //console.log(splitLines(inputD));
 
+        // Split the input file data into a 1-D array of text lines, one array element for for each text line in the input file.
+        //
         const inputArray = splitLines(inputD);
 
+        // Populate the 1-D routeObjectsArray array with objects, each object corresponding to a source/connector/sink element as
+        // described in the input file along with its X,Y coordinates.
+        // NOTE: Description of object properties:
+        //  InputChar - left-most character in each line of the input file (source/connector/sink).
+        //  Utf16Code - Utf16 code corresponding to the InputChar character.  Utf16 code was chosen since this includes pipe connector symbols
+        //      which are lacking in other code sets like ASCII.
+        //  XCoord, YCoord - X,Y coordinates for this source/connector/sink object.
+        //  Connectors - 1-D array of "connector" objects.  This array is sized to 4 (for the max. number of connections of a given element -
+        //      Up / Down / Left / Right, but initislized to Connector = false, meaning "not a connector for this shape".  Farther on in
+        //      InitializeCellConnectors() this array's entries will be updated per the specific connector type.  Farther on in the program
+        //      Connected is set to true when a connection is made between two adjacent array elements.
+        //      
         var routeObjectsArray = [];
 
         for (let i = 0; i < inputArray.length; i++) {
@@ -86,42 +100,55 @@ function FindAllSinksFromSource(filePath) {
                 }
             }
             else {
+                // This is for blank row gaps in the input data.
+                //
                 routeObjectsArray[i] = nothing;
             }
         }
 
+        // Get the upper and lower X & Y bounds so we can create a rectangular route matrix (2-D array)
+        //
         XCoordMax = Math.max(...routeObjectsArray.map(o => o.XCoord));
-        console.log('XCoordMax=' + XCoordMax.toString());
+        //console.log('XCoordMax=' + XCoordMax.toString());
 
         XCoordMin = Math.min(...routeObjectsArray.map(o => o.XCoord));
-        console.log('XCoordMin=' + XCoordMin.toString());
+        //console.log('XCoordMin=' + XCoordMin.toString());
 
         YCoordMax = Math.max(...routeObjectsArray.map(o => o.YCoord));
-        console.log('YCoordMax=' + YCoordMax.toString());
+        //console.log('YCoordMax=' + YCoordMax.toString());
 
         YCoordMin = Math.min(...routeObjectsArray.map(o => o.YCoord));
-        console.log('YCoordMin=' + YCoordMin.toString());
+        //console.log('YCoordMin=' + YCoordMin.toString());
 
+        // Dimensions for the 2-D route matrix
+        //
         let rows = XCoordMax + 1;
         let cols = YCoordMax + 1;
         let initialValue = undefined;
 
+        // Create the 2-D route matrix and initialize all cells with undefined.
+        //
         routeMatrix = Array.from({ length: rows }, () => Array(cols).fill(initialValue));
 
+        // Populate the 2-D route matrix from the routeObjectsArray array after having updated each cell's connectors per its
+        // source/connector/sink character shape.
+        //
         for (let i = 0; i < routeObjectsArray.length; i++) {
             InitializeCellConnectors(routeObjectsArray[i]);
             routeMatrix[routeObjectsArray[i].XCoord][routeObjectsArray[i].YCoord] = routeObjectsArray[i];
         }
 
-        for (let i = 0; i < routeMatrix.length; i++) {
-            for (let j = 0; j < routeMatrix[i].length; j++) {
-                let myJSON = JSON.stringify(routeMatrix[i][j]);
+        //for (let i = 0; i < routeMatrix.length; i++) {
+        //    for (let j = 0; j < routeMatrix[i].length; j++) {
+        //        let myJSON = JSON.stringify(routeMatrix[i][j]);
 
-                // Display output
-                console.log(myJSON);
-            }
-        }
+        //        // Display output
+        //        console.log(myJSON);
+        //    }
+        //}
 
+        // Find the source object in the newly populated routeMatrix.
+        //
         var sourceObj = undefined;
 
         for (let i = 0; i < routeMatrix.length; i++) {
@@ -129,12 +156,17 @@ function FindAllSinksFromSource(filePath) {
             if (sourceObj != undefined) break;
         }
 
+        // Perform the recursive connections, spanning out in all 4 directions (Up/Down/Left/Right)
+        //.
         FindSink(sourceObj);
 
-        for (const [key, value] of Object.entries(routedSinks)) {
-            console.log(key, value);
-        }
+        //for (const [key, value] of Object.entries(routedSinks)) {
+        //    console.log(key, value);
+        //}
 
+        // Sort alphabetically the connected-to sinks as contained in the routedSinks dictionary and concatenate them
+        // into a single string, resultString, to be returned to the calling program.
+        //
         Object.keys(routedSinks)
             .sort()
             .forEach(function (v, i) {
@@ -317,13 +349,13 @@ function ComponentsMate(refCell, testCell) {
             //
             if (regex.test(testCell.InputChar)) {
                 routedSinks[testCell.InputChar] = testCell.InputChar;
-                console.log("Sink: " + testCell.InputChar + " was routed to.");
+                //console.log("Sink: " + testCell.InputChar + " was routed to.");
                 //returnStatus = false;
             }
             // If testCell is the asterisk ORIGIN, tell the calling level to stop tunneling along this path.
             //
             else if (testCell.InputChar == "*") {
-                console.log("Source: " + testCell.InputChar + " was encountered.");
+                //console.log("Source: " + testCell.InputChar + " was encountered.");
                 returnStatus = false;
             }
         }

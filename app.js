@@ -47,6 +47,8 @@ let regex = /^[a-zA-Z]+$/;
 var XCoordMax, XCoordMin, YCoordMax, YCoordMin;
 var routeMatrix;
 
+// This is the file path we will pass to FindAllSinksFromSource.
+//
 let filePath = "c:\\";
 
 function FindAllSinksFromSource(filePath) {
